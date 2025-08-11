@@ -1,34 +1,12 @@
-import mysql.connector
-
-def conectar():
-    return mysql.connector.connect(
-        host="localhost",
-        user="Brunopy",
-        password="12345678900000",
-        database='controle_financeiro'
-    )
-
-def inserir_categoria(nome, tipo):
-    db = conectar()
-    cursor = db.cursor()
-    sql = "INSERT INTO categorias (nome, tipo) VALUES (%s, %s)"
-    cursor.execute(sql, (nome, tipo))
-    db.commit()
-    cursor.close()
-    db.close()
-
-def listar_categorias():
-    db = conectar()
-    cursor = db.cursor()
-    cursor.execute("SELECT id, nome, tipo FROM categorias")
-    resultados = cursor.fetchall()
-    cursor.close()
-    db.close()
-    return resultados
+# main.py
+from crud.crud_usuarios import listar_usuarios
+from crud.crud_categorias import listar_categorias
 
 if __name__ == "__main__":
-    inserir_categoria("Salário", "receita")
-    inserir_categoria("Alimentação", "despesa")
-    categorias = listar_categorias()
-    for cat in categorias:
-        print(cat)
+    print("📌 Lista de usuários:")
+    for u in listar_usuarios():
+        print(u)
+
+    print("\n📌 Lista de categorias:")
+    for c in listar_categorias():
+        print(c)
