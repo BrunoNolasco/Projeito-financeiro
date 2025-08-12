@@ -1,43 +1,42 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.uix.popup import Popup
-from interface.tela_nova_transacao import TelaNovaTransacao
+import sqlite3
 
-class TransacoesListView(RecycleView):
-    def __init__(self, transacoes, **kwargs):
-        super().__init__(**kwargs)
-        self.data = [{'text': t} for t in transacoes]
+DB_PATH = "dados_financeiros.db"
+
+class ListaTransacoes(RecycleView):
+    def __init__(self, **kwargs):
+        super(ListaTransacoes, self).__init__(**kwargs)
+        self.refresh_list()
+
+    def refresh_list(self):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT descricao, valor, data FROM transacoes ORDER BY data DESC")
+        dados = cursor.fetchall()
+        conn.close()
+
+        self.data = [
+            {"text": f"{desc} | {valor:.2f}€ | {data}"}
+            for desc, valor, data in dados
+        ]
 
 class TelaPrincipal(BoxLayout):
     def __init__(self, **kwargs):
-        super().__init__(orientation='vertical', **kwargs)
+        super(TelaPrincipal, self).__init__(orientation='vertical', **kwargs)
 
-        self.add_widget(Label(text="Transações Recentes", size_hint=(1, 0.1)))
-
-        transacoes = [
-            "01/08 - Salário - R$ 2500,00",
-            "02/08 - Alimentação - R$ 150,00",
-            "03/08 - Transporte - R$ 50,00",
-        ]
-
-        self.lista = TransacoesListView(transacoes=transacoes, size_hint=(1, 0.7))
+        self.lista = ListaTransacoes()
         self.add_widget(self.lista)
 
-        btn_nova = Button(text="Nova Transação", size_hint=(1, 0.1))
-        btn_nova.bind(on_press=self.abrir_formulario)
-        self.add_widget(btn_nova)
+        btn_atualizar = Button(text="Atualizar Lista", size_hint_y=None, height=40)
+        btn_atualizar.bind(on_release=lambda x: self.lista.refresh_list())
+        self.add_widget(btn_atualizar)
 
-    def abrir_formulario(self, instance):
-        formulario = TelaNovaTransacao()
-        popup = Popup(title="Nova Transação", content=formulario, size_hint=(0.8, 0.8))
-        popup.open()
-
-class ControleFinanceiroApp(App):
+class FinanceiroApp(App):
     def build(self):
         return TelaPrincipal()
 
 if __name__ == "__main__":
-    ControleFinanceiroApp().run()
+    FinanceiroApp().run()
