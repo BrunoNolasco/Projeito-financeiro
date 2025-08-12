@@ -1,4 +1,3 @@
-# main.py
 from crud.crud_usuarios import listar_usuarios
 from crud.crud_categorias import listar_categorias
 
