@@ -1,11 +1,9 @@
-from crud.crud_usuarios import listar_usuarios
-from crud.crud_categorias import listar_categorias
+import mysql.connector
 
-if __name__ == "__main__":
-    print("📌 Lista de usuários:")
-    for u in listar_usuarios():
-        print(u)
-
-    print("\n📌 Lista de categorias:")
-    for c in listar_categorias():
-        print(c)
+def get_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="Brunopy",
+        password="12345678900000",
+        database='controle_financeiro'
+    )
