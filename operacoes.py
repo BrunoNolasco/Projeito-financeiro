@@ -19,9 +19,10 @@ def opera():
         exit()
     else:
         usuario_logado, senha_logada = credenciais
-    
+        cursor.execute("SELECT id FROM banco WHERE nome = %s", (usuario_logado,))
+        id_banco = cursor.fetchone()[0]
+        
     while True:
-
         print("\n")
         print("Aperte 1 para Retirar dinheiro")
         print("Aperte 2 para Depositar dinheiro")
@@ -30,7 +31,7 @@ def opera():
         print("Aperte 5 para atualizar detalhes da Conta")
         print("Aperte 6 para deletar sua Conta permanentemente: ")
         print("Aperte 7 para fazer Log Out")
-        try:
+        try: 
             escolha=int(input("Insira sua escolha: "))
             if(escolha>=8):
                 raise TypeError ("")
@@ -74,8 +75,8 @@ def opera():
                     gfn="SET FOREIGN_KEY_CHECKS=0"
                     cursor.execute(gfn)
                     conexao.commit()
-                    bp="insert into transacao values('{}','{}','{}','{}')".format(creditado,a1,usuario_logado,dates1)
-                    cursor.execute(bp)
+                    bp = "INSERT INTO transacao (creditado, debitado, id_banco, data) VALUES (%s, %s, %s, %s)"
+                    cursor.execute(bp, (creditado, a1, id_banco, dates1))
                     conexao.commit()
                     gf="SET FOREIGN_KEY_CHECKS=1"
                     cursor.execute(gf)
@@ -85,8 +86,8 @@ def opera():
                     bal1=cursor.fetchone()[0]
                     print("\n")
                     print("____________________________________________________________________")
-                    print("Você, " ,usuario_logado , "debitou " , a1 ,"no dia " , dates1)
-                    print("O Saldo disponível atual é de: " , bal1, "")
+                    print("Você," ,usuario_logado,", creditou" , a1 ,"euros no dia" , dates1)
+                    print("O Saldo disponível atual é de:" , bal1, "euros.")
                     print("________________________________________________________________________")
                 elif(a1>bal):
 
@@ -110,47 +111,56 @@ def opera():
                         cursor.execute(t6)
                         conexao.commit()
 
-                        mn="insert into transacao values('{}','{}','{}','{}')".format(a11,debitado,usuario_logado,dates1)
-                        cursor.execute(mn)
+                        mn = "INSERT INTO transacao (creditado, debitado, id_banco, data) VALUES (%s, %s, %s, %s)"
+                        cursor.execute(mn, (a11, debitado, id_banco, dates1))
                         conexao.commit()
+
                         np9="select saldo from banco where nome='{}'".format(usuario_logado)
                         cursor.execute(np9)
                         bal2=cursor.fetchone()[0]
                         print("\n")
                         print("____________________________________________________________________")
-                        print("Você, " ,usuario_logado , "creditou" , a11 ,"no dia " , dates1)
-                        print("O Saldo disponível atual é de: " , bal2, "")
+                        print("Você," ,usuario_logado,", debitou" , a11 ,"euros no dia" , dates1)
+                        print("O Saldo disponível atual é de:" , bal2, "euros.")
                         print("________________________________________________________________________")
                         break
                 except TypeError:
                     print("erro")
                 except IntegrityError:
                     print("erro")
-        elif(escolha==3):
-            prt="Select creditado,debitado,data from transacao where nome1='{}'".format(usuario_logado)
-            cursor.execute(prt)
-            print("______________________________________________________________________________")
-            print("*************** Os detalhes da transação são *********************")
-            print("\n")
-            for i in cursor:
-                print("___________________________________________________________________________")
-                print("creditado , debitado : " ,i)
-                print("___________________________________________________________________________")
-        elif(escolha==4):
-            nmm="Select nome, sobrenome, senha_hash, endereco, telefone, contribuinte, saldo from banco where nome='{}'".format(usuario_logado)
-            cursor.execute(nmm)
-            print("______________________________________________________________________________")
-            print("**************************** Detalhes da Conta ******************************")
-            print("______________________________________________________________________________")
-            print("\n")
-            print("_______________________________________________________________________________")
-            print("    Nome      Sobrenome    Endereço     Telefone \t   Contribuinte    Saldo")
-            print("_______________________________________________________________________________")
-            print("\n")
-            for i in cursor:
+        elif escolha == 3:
+            prt = "SELECT creditado, debitado, data FROM transacao WHERE id_banco=%s"
+            cursor.execute(prt, (id_banco,))
+            linhas = cursor.fetchall()
+
+            if linhas:
+                print("_____________________________________________________________________")
+                print(f"{'Creditado':>10} | {'Debitado':>10} | {'Data':>12}")
+                print("_____________________________________________________________________")
+                for creditado, debitado, data in linhas:
+                    print(f"{creditado:>10.2f} | {debitado:>10.2f} | {data}")
+                print("_____________________________________________________________________")
+            else:
+                print("Nenhuma transação encontrada.")
+
+        elif escolha == 4:
+            nmm = "SELECT nome, sobrenome, endereco, telefone, contribuinte, saldo FROM banco WHERE nome=%s"
+            cursor.execute(nmm, (usuario_logado,))
+            conta = cursor.fetchone()
+            
+            if conta:
+                nome, sobrenome, endereco, telefone, contribuinte, saldo = conta
+                
                 print("______________________________________________________________________________")
-                print(i)
+                print("**************************** Detalhes da Conta ******************************")
+                print("\n")
+                print(f"{'Nome':<10} {'Sobrenome':<12} {'Endereço':<20} {'Telefone':<12} {'Contribuinte':<12} {'Saldo':>10}")
+                print("\n")
+                print(f"{nome:<10} {sobrenome:<12} {endereco:<20} {telefone:<12} {contribuinte:<12} {saldo:>10.2f}")
                 print("______________________________________________________________________________")
+            else:
+                print("Usuário não encontrado.")
+
         elif(escolha==5):
             while True:
                 print("\n")
@@ -175,80 +185,73 @@ def opera():
                     print("___________________________________________________")
                     continue
                 break
-            if(escolha2==1):
+        if escolha2 == 1:
+            try:
+                novo_nome = input("Insira seu novo nome: ")
+                ns = "UPDATE banco SET nome = %s WHERE id = %s"
+                cursor.execute(ns, (novo_nome, id_banco))
+                conexao.commit()
+                print("_________________________________________________________________________")
+                print("                     Nome atualizado com sucesso!                       ")
+                print("_________________________________________________________________________")
+            except Exception as e:
+                print("Algo deu errado:", e)
+        
+        elif escolha2 == 2:
+            try:
+                novo_sobrenome = input("Insira seu novo Sobrenome: ")
+                ns = "UPDATE banco SET sobrenome = %s WHERE id = %s"
+                cursor.execute(ns, (novo_sobrenome, id_banco))
+                conexao.commit()
+                print("_________________________________________________________________________")
+                print("                   Sobrenome atualizado com sucesso!                    ")
+                print("_________________________________________________________________________")
+            except Exception as e:
+                print("Algo deu errado:", e)
+        
+        elif escolha2 == 3:
+            try:
+                nova_senha = input("Insira sua nova senha: ")
+                ns = "UPDATE banco SET senha_hash = SHA2(%s, 256) WHERE id = %s"
+                cursor.execute(ns, (nova_senha, id_banco))
+                conexao.commit()
+                print("_________________________________________________________________________")
+                print("                  Senha atualizada com sucesso!                          ")
+                print("_________________________________________________________________________")
+            except Exception as e:
+                print("Algo deu errado:", e)
+        
+        elif escolha2 == 4:
+            while True:
                 try:
-                    novo_nome=input ("Insira seu novo nome: ")
-                    ns="update banco set novo_nome='{}' where senha_hash='{}'".format(novo_nome,senha_logada)
-
-                    cursor.execute(ns)
+                    novo_telefone = input("Insira o seu novo número de telefone: ")
+                    if len(novo_telefone) != 9 or not novo_telefone.isdigit():
+                        raise ValueError("Número inválido")
+                    ns = "UPDATE banco SET telefone = %s WHERE id = %s"
+                    cursor.execute(ns, (novo_telefone, id_banco))
                     conexao.commit()
                     print("_________________________________________________________________________")
-                    print ("                     Nome atualizado com sucesso!                       ")
+                    print("                  Telefone atualizado com sucesso!                       ")
                     print("_________________________________________________________________________")
-                except IndexError:
-                    print("Algo deu errado")
-            elif(escolha2==2):
-                try:
-                    gf="SET FOREIGN_KEY_CHECKS=0"
-                    cursor.execute(gf)
-                    conexao.commit()
-                    mp=input("Insira seu novo Sobrenome: ")
-                    novo_sobrenome="update banco set novo_sobrenome='{}' where nome='{}'".format(mp,usuario_logado)
-                    cursor.execute(novo_sobrenome)
-                    conexao.commit()
-                    print("_________________________________________________________________________")
-                    print ("                   Sobrenome atualizado com sucesso!                    ")
-                    print("_________________________________________________________________________")
-
-                    gf1="SET FOREIGN_KEY_CHECKS=1"
-                    cursor.execute(ns)
-                    conexao.commit(gf1)
-
-                except Exception:
-                    print("")
-            elif(escolha2==3):
-                try:
-                    nova_senha=input("Insira sua nova senha: ")
-                    us="update banco set nova_senha='{}' where nome='{}'".format(nova_senha,usuario_logado)
-                    cursor.execute(us)
-                    conexao.commit()
-                    print ("          Senha atualizada com sucesso!          ")
-                except IndexError:
-                    print("Algo deu errado")
-            elif(escolha2==4):
-                while True:
-                    try:
-                        novo_telefone=(input("Insira o seu novo número de telefone: "))
-                        if(len(novo_telefone)!=9) or novo_telefone.isalpha():
-                            raise ValueError ("")
-
-
-                        us="update banco set telefone='{}' where  nome='{}'".format(novo_telefone,usuario_logado)
-                        cursor.execute(us)
-                        conexao.commit()
-                        print("_________________________________________________________________________")
-                        print ("                  Telefone foi atualizado com sucesso!                  ")
-                        print("_________________________________________________________________________")
-
-                    except ValueError:
-                        print("________________________________________________________")
-                        print("          Insira um número válido de 9 dígitos          ")
-                        print("________________________________________________________")
-                        print("\n")
-                        continue
                     break
+                except ValueError:
+                    print("________________________________________________________")
+                    print("          Insira um número válido de 9 dígitos          ")
+                    print("________________________________________________________")
+                    continue
                 
-            elif(escolha2==5):
-                try:
-                    novo_endereco=input("Insira o seu novo endereco: ")
-                    ns1="update banco set endereco='{}' where nome='{}'".format(novo_endereco,usuario_logado)
-                    cursor.execute(ns1)
-                    conexao.commit()
-                    print("_________________________________________________________________________")
-                    print("                    Endereço atualizado com sucesso!                     ") 
-                    print("_________________________________________________________________________")
-                except IndexError:
-                    print("Algo deu errado")
+        elif escolha2 == 5:
+            try:
+                novo_endereco = input("Insira o seu novo endereço: ")
+                ns = "UPDATE banco SET endereco = %s WHERE id = %s"
+                cursor.execute(ns, (novo_endereco, id_banco))
+                conexao.commit()
+                print("_________________________________________________________________________")
+                print("                    Endereço atualizado com sucesso!                     ")
+                print("_________________________________________________________________________")
+            except Exception as e:
+                print("Algo deu errado:", e)
+
         elif(escolha==6):
             ns="SET FOREIGN_KEY_CHECKS=0"
             cursor.execute(ns)
@@ -256,7 +259,7 @@ def opera():
             ps="delete from banco where senha_hash='{}'".format(senha_logada)
             cursor.execute(ps)
             conexao.commit()
-            gs="delete from transacao where nome1='{}'".format(usuario_logado)
+            gs="delete from transacao where id_banco='{}'".format(id_banco)
             cursor.execute(gs)
             conexao.commit()
 
@@ -275,6 +278,3 @@ def opera():
             print("                  Obrigado por escolher a Personal Finance                  ")
             print("____________________________________________________________________________")
             exit()
-            
-if __name__ == "__main__":
-    opera()
