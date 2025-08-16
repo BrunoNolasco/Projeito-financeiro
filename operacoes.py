@@ -3,10 +3,6 @@ import mysql.connector as mysql
 import datetime as date
 dates1 = date.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-from log_in import login
-usuario_logado = login()
-senha_logada = login()
-
 conexao = mysql.connect(
     host="localhost",
     user="Brunopy",
@@ -15,9 +11,15 @@ conexao = mysql.connect(
 )
 cursor = conexao.cursor()
 
-
-
 def opera():
+
+    from log_in import login
+    credenciais = login()
+    if credenciais is None:
+        exit()
+    else:
+        usuario_logado, senha_logada = credenciais
+    
     while True:
 
         print("\n")
@@ -142,7 +144,7 @@ def opera():
             print("______________________________________________________________________________")
             print("\n")
             print("_______________________________________________________________________________")
-            print("    Nome      Sobrenome  Senha   Endereço     Telefone \t   Contribuinte    Saldo")
+            print("    Nome      Sobrenome    Endereço     Telefone \t   Contribuinte    Saldo")
             print("_______________________________________________________________________________")
             print("\n")
             for i in cursor:
@@ -156,7 +158,7 @@ def opera():
                 print("                Configuração da Conta                ")
                 print("_____________________________________________________")
 
-                print("Aperte 1 para atualizar o seu Name: ")
+                print("Aperte 1 para atualizar o seu Nome: ")
                 print("Aperte 2 para atualizar o seu Sobrenome: ")                        
                 print("Aperte 3 para atualizar a sua Senha: ")
                 print("Aperte 4 para atualizar o seu Telefone: ")
@@ -176,7 +178,7 @@ def opera():
             if(escolha2==1):
                 try:
                     novo_nome=input ("Insira seu novo nome: ")
-                    ns="update banco set novo_nome='{}' where senha='{}'".format(novo_nome,senha_logada)
+                    ns="update banco set novo_nome='{}' where senha_hash='{}'".format(novo_nome,senha_logada)
 
                     cursor.execute(ns)
                     conexao.commit()
@@ -251,7 +253,7 @@ def opera():
             ns="SET FOREIGN_KEY_CHECKS=0"
             cursor.execute(ns)
             conexao.commit()
-            ps="delete from banco where senha='{}'".format(senha_logada)
+            ps="delete from banco where senha_hash='{}'".format(senha_logada)
             cursor.execute(ps)
             conexao.commit()
             gs="delete from transacao where nome1='{}'".format(usuario_logado)
@@ -273,3 +275,6 @@ def opera():
             print("                  Obrigado por escolher a Personal Finance                  ")
             print("____________________________________________________________________________")
             exit()
+            
+if __name__ == "__main__":
+    opera()

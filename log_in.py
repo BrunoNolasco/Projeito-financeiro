@@ -24,7 +24,8 @@ def login():
             print("\n")
             print("            Nome ou senha inválidos            ")
             print("\n")
-            
+            return None
+        
     except ValueError as e:
             print(e)
-
+    return None

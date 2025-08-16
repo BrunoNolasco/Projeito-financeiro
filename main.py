@@ -26,7 +26,7 @@ def sign_log():
                 break
             
             elif esc == 2:
-                login()
+                opera()
                 break
 
         except ValueError as e:
