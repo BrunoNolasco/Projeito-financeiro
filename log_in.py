@@ -19,8 +19,12 @@ def login():
 
         if resultado:
             print("Login efetuado com sucesso!")
+            return usuario,senha
         else:
-            print("Nome ou senha inválidos.")
+            print("\n")
+            print("            Nome ou senha inválidos            ")
+            print("\n")
             
     except ValueError as e:
             print(e)
+
