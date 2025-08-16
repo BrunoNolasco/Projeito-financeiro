@@ -21,25 +21,21 @@ def opera():
     while True:
 
         print("\n")
-        print("___________________________________________________________________________")
-        print("*************** Welcome To Colony banco Of India : *************************")
-        print("___________________________________________________________________________")
-        print("\n")
-        print("Press 1 To Withdraw Money")
-        print("Press 2 To Deposit Money")
-        print("Press 3 to view Last Five transacao ")
-        print("Press 4 To View Your Profile ")
-        print("Press 5 To Update Account details")
-        print("Press 6 to Delete Your Account Permanently : ")
-        print("Press 7 for Log Out")
+        print("Aperte 1 para Retirar dinheiro")
+        print("Aperte 2 para Depositar dinheiro")
+        print("Aperte 3 para ver as últimas 5 transações")
+        print("Aperte 4 para ver o seu perfil")
+        print("Aperte 5 para atualizar detalhes da Conta")
+        print("Aperte 6 para deletar sua Conta permanentemente: ")
+        print("Aperte 7 para fazer Log Out")
         try:
-            escolha=int(input("Enter Your Choice : "))
+            escolha=int(input("Insira sua escolha: "))
             if(escolha>=8):
                 raise TypeError ("")
 
         except TypeError:
             print("________________________________________________")
-            print("     OOPs !!! That Was an Invalid Input :(  ")
+            print("                 Imput inválido                 ")
             print("________________________________________________")
 
         if(escolha==1):
@@ -49,7 +45,7 @@ def opera():
                 cursor.execute(np)
                 bal=cursor.fetchone()[0]
             except Exception:
-                print("oops")
+                print("erro")
             print("\n")
             print("________________________________ ")
             print("O seu saldo bancario é: " ,bal)
@@ -61,7 +57,7 @@ def opera():
 
                 except ValueError:
                     print("_______________________________________________________________________ ")
-                    print("   ***OOPs that was an invalid input***  :)  ")
+                    print("                             Imput inválido                             ")
                     print("_______________________________________________________________________ ")
                     print("\n")
                     continue
@@ -87,13 +83,13 @@ def opera():
                     bal1=cursor.fetchone()[0]
                     print("\n")
                     print("____________________________________________________________________")
-                    print("Your nome " ,usuario_logado , "is debitado with Rs" , a1 ,"on " , dates1)
-                    print("towards Net bancoing. Available saldo is Rs : " , bal1, " ₹ only ")
+                    print("Você, " ,usuario_logado , "debitou " , a1 ,"no dia " , dates1)
+                    print("O Saldo disponível atual é de: " , bal1, "")
                     print("________________________________________________________________________")
                 elif(a1>bal):
 
                     print("________________________________________________________________________")
-                    print("   ********* OOPS Insufficient saldo Please Try Again !  **********")
+                    print(             "Saldo insuficiente, por favor tente novamente!"             )
                     print("________________________________________________________________________")
                 break
 
@@ -120,29 +116,29 @@ def opera():
                         bal2=cursor.fetchone()[0]
                         print("\n")
                         print("____________________________________________________________________")
-                        print("Your nome " ,usuario_logado , "is creditado with Rs" , a11 ,"on " , dates1)
-                        print("towards Net bancoing. Available saldo is Rs : " , bal2, " ₹ only")
+                        print("Você, " ,usuario_logado , "creditou" , a11 ,"no dia " , dates1)
+                        print("O Saldo disponível atual é de: " , bal2, "")
                         print("________________________________________________________________________")
                         break
                 except TypeError:
-                    print("oops")
+                    print("erro")
                 except IntegrityError:
-                    print("oopss")
+                    print("erro")
         elif(escolha==3):
             prt="Select creditado,debitado,data from transacao where nome1='{}'".format(usuario_logado)
             cursor.execute(prt)
             print("______________________________________________________________________________")
-            print("*************** The transacao Details are as Follows*********************")
+            print("*************** Os detalhes da transação são *********************")
             print("\n")
             for i in cursor:
                 print("___________________________________________________________________________")
-                print("creditado , debitado  : " ,i)
+                print("creditado , debitado : " ,i)
                 print("___________________________________________________________________________")
         elif(escolha==4):
             nmm="Select nome, sobrenome, senha_hash, endereco, telefone, contribuinte, saldo from banco where nome='{}'".format(usuario_logado)
             cursor.execute(nmm)
             print("______________________________________________________________________________")
-            print("*******************************ACCOUNT DETAILS *******************************")
+            print("**************************** Detalhes da Conta ******************************")
             print("______________________________________________________________________________")
             print("\n")
             print("_______________________________________________________________________________")
@@ -173,7 +169,7 @@ def opera():
 
                 except Exception:
                     print("___________________________________________________")
-                    print("      ****OOP's That's Was an invalid input****    ")
+                    print("              ****Imput inválido****               ")
                     print("___________________________________________________")
                     continue
                 break
@@ -185,10 +181,10 @@ def opera():
                     cursor.execute(ns)
                     conexao.commit()
                     print("_________________________________________________________________________")
-                    print ("   ****Hurrey !!! Name is Updated Successfully***   :) ")
+                    print ("                     Nome atualizado com sucesso!                       ")
                     print("_________________________________________________________________________")
                 except IndexError:
-                    print("Oh Something Went Wrong !!!")
+                    print("Algo deu errado")
             elif(escolha2==2):
                 try:
                     gf="SET FOREIGN_KEY_CHECKS=0"
@@ -199,7 +195,7 @@ def opera():
                     cursor.execute(novo_sobrenome)
                     conexao.commit()
                     print("_________________________________________________________________________")
-                    print ("   ****Hurrey !!! nome is Updated Successfully***   :) ")
+                    print ("                   Sobrenome atualizado com sucesso!                    ")
                     print("_________________________________________________________________________")
 
                     gf1="SET FOREIGN_KEY_CHECKS=1"
@@ -214,9 +210,9 @@ def opera():
                     us="update banco set nova_senha='{}' where nome='{}'".format(nova_senha,usuario_logado)
                     cursor.execute(us)
                     conexao.commit()
-                    print ("Hurrey !!! Password is Updated Successfully")
+                    print ("          Senha atualizada com sucesso!          ")
                 except IndexError:
-                    print("Oh Something Went Wrong")
+                    print("Algo deu errado")
             elif(escolha2==4):
                 while True:
                     try:
@@ -229,12 +225,12 @@ def opera():
                         cursor.execute(us)
                         conexao.commit()
                         print("_________________________________________________________________________")
-                        print ("   ****Hurrey !!! Mobile Number is Updated Successfully***   :) ")
+                        print ("                  Telefone foi atualizado com sucesso!                  ")
                         print("_________________________________________________________________________")
 
                     except ValueError:
                         print("________________________________________________________")
-                        print("**** Please Enter a valid 9 digit Number ******")
+                        print("          Insira um número válido de 9 dígitos          ")
                         print("________________________________________________________")
                         print("\n")
                         continue
@@ -242,15 +238,15 @@ def opera():
                 
             elif(escolha2==5):
                 try:
-                    novo_endereco=input("Insira o seu novo novo endereco: ")
+                    novo_endereco=input("Insira o seu novo endereco: ")
                     ns1="update banco set endereco='{}' where nome='{}'".format(novo_endereco,usuario_logado)
                     cursor.execute(ns1)
                     conexao.commit()
                     print("_________________________________________________________________________")
-                    print("   *** Hurrey !!! Address is Updated Successfully ***  :) ") 
+                    print("                    Endereço atualizado com sucesso!                     ") 
                     print("_________________________________________________________________________")
                 except IndexError:
-                    print("OOPS Something Went Swrong !!! ")
+                    print("Algo deu errado")
         elif(escolha==6):
             ns="SET FOREIGN_KEY_CHECKS=0"
             cursor.execute(ns)
@@ -267,13 +263,13 @@ def opera():
             conexao.commit()
             print("\n")
             print("_________________________________________________________________________")
-            print("************* ACCOUNT HAS BEEN DELETED SUCCESSFULLY *******************")
+            print("                       Conta deletada com sucesso!                       ")
             print("_________________________________________________________________________")
             print("\n")
             exit()
         elif(escolha==7):
             print("\n")
-            print("_____________________________________________________________________________")
-            print("*************Thanks For Choosing Colony banco Of India *****************")
+            print("____________________________________________________________________________")
+            print("                  Obrigado por escolher a Personal Finance                  ")
             print("____________________________________________________________________________")
             exit()
