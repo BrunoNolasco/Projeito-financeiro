@@ -185,93 +185,108 @@ def opera():
                     print("___________________________________________________")
                     continue
                 break
-        if escolha2 == 1:
-            try:
-                novo_nome = input("Insira seu novo nome: ")
-                ns = "UPDATE banco SET nome = %s WHERE id = %s"
-                cursor.execute(ns, (novo_nome, id_banco))
-                conexao.commit()
-                print("_________________________________________________________________________")
-                print("                     Nome atualizado com sucesso!                       ")
-                print("_________________________________________________________________________")
-            except Exception as e:
-                print("Algo deu errado:", e)
-        
-        elif escolha2 == 2:
-            try:
-                novo_sobrenome = input("Insira seu novo Sobrenome: ")
-                ns = "UPDATE banco SET sobrenome = %s WHERE id = %s"
-                cursor.execute(ns, (novo_sobrenome, id_banco))
-                conexao.commit()
-                print("_________________________________________________________________________")
-                print("                   Sobrenome atualizado com sucesso!                    ")
-                print("_________________________________________________________________________")
-            except Exception as e:
-                print("Algo deu errado:", e)
-        
-        elif escolha2 == 3:
-            try:
-                nova_senha = input("Insira sua nova senha: ")
-                ns = "UPDATE banco SET senha_hash = SHA2(%s, 256) WHERE id = %s"
-                cursor.execute(ns, (nova_senha, id_banco))
-                conexao.commit()
-                print("_________________________________________________________________________")
-                print("                  Senha atualizada com sucesso!                          ")
-                print("_________________________________________________________________________")
-            except Exception as e:
-                print("Algo deu errado:", e)
-        
-        elif escolha2 == 4:
-            while True:
+            if escolha2 == 1:
                 try:
-                    novo_telefone = input("Insira o seu novo número de telefone: ")
-                    if len(novo_telefone) != 9 or not novo_telefone.isdigit():
-                        raise ValueError("Número inválido")
-                    ns = "UPDATE banco SET telefone = %s WHERE id = %s"
-                    cursor.execute(ns, (novo_telefone, id_banco))
+                    novo_nome = input("Insira seu novo nome: ")
+                    ns = "UPDATE banco SET nome = %s WHERE id = %s"
+                    cursor.execute(ns, (novo_nome, id_banco))
                     conexao.commit()
                     print("_________________________________________________________________________")
-                    print("                  Telefone atualizado com sucesso!                       ")
+                    print("                     Nome atualizado com sucesso!                       ")
                     print("_________________________________________________________________________")
-                    break
-                except ValueError:
-                    print("________________________________________________________")
-                    print("          Insira um número válido de 9 dígitos          ")
-                    print("________________________________________________________")
-                    continue
-                
-        elif escolha2 == 5:
-            try:
-                novo_endereco = input("Insira o seu novo endereço: ")
-                ns = "UPDATE banco SET endereco = %s WHERE id = %s"
-                cursor.execute(ns, (novo_endereco, id_banco))
-                conexao.commit()
-                print("_________________________________________________________________________")
-                print("                    Endereço atualizado com sucesso!                     ")
-                print("_________________________________________________________________________")
-            except Exception as e:
-                print("Algo deu errado:", e)
+                except Exception as e:
+                    print("Algo deu errado:", e)
 
-        elif(escolha==6):
-            ns="SET FOREIGN_KEY_CHECKS=0"
-            cursor.execute(ns)
-            conexao.commit()
-            ps="delete from banco where senha_hash='{}'".format(senha_logada)
-            cursor.execute(ps)
-            conexao.commit()
-            gs="delete from transacao where id_banco='{}'".format(id_banco)
-            cursor.execute(gs)
-            conexao.commit()
+            elif escolha2 == 2:
+                try:
+                    novo_sobrenome = input("Insira seu novo Sobrenome: ")
+                    ns = "UPDATE banco SET sobrenome = %s WHERE id = %s"
+                    cursor.execute(ns, (novo_sobrenome, id_banco))
+                    conexao.commit()
+                    print("_________________________________________________________________________")
+                    print("                   Sobrenome atualizado com sucesso!                    ")
+                    print("_________________________________________________________________________")
+                except Exception as e:
+                    print("Algo deu errado:", e)
 
-            ns1="SET FOREIGN_KEY_CHECKS=1"
-            cursor.execute(ns1)
-            conexao.commit()
-            print("\n")
-            print("_________________________________________________________________________")
-            print("                       Conta deletada com sucesso!                       ")
-            print("_________________________________________________________________________")
-            print("\n")
-            exit()
+            elif escolha2 == 3:
+                try:
+                    nova_senha = input("Insira sua nova senha: ")
+                    ns = "UPDATE banco SET senha_hash = SHA2(%s, 256) WHERE id = %s"
+                    cursor.execute(ns, (nova_senha, id_banco))
+                    conexao.commit()
+                    print("_________________________________________________________________________")
+                    print("                  Senha atualizada com sucesso!                          ")
+                    print("_________________________________________________________________________")
+                except Exception as e:
+                    print("Algo deu errado:", e)
+
+            elif escolha2 == 4:
+                while True:
+                    try:
+                        novo_telefone = input("Insira o seu novo número de telefone: ")
+                        if len(novo_telefone) != 9 or not novo_telefone.isdigit():
+                            raise ValueError("Número inválido")
+                        ns = "UPDATE banco SET telefone = %s WHERE id = %s"
+                        cursor.execute(ns, (novo_telefone, id_banco))
+                        conexao.commit()
+                        print("_________________________________________________________________________")
+                        print("                  Telefone atualizado com sucesso!                       ")
+                        print("_________________________________________________________________________")
+                        break
+                    except ValueError:
+                        print("________________________________________________________")
+                        print("          Insira um número válido de 9 dígitos          ")
+                        print("________________________________________________________")
+                        continue
+                    
+            elif escolha2 == 5:
+                try:
+                    novo_endereco = input("Insira o seu novo endereço: ")
+                    ns = "UPDATE banco SET endereco = %s WHERE id = %s"
+                    cursor.execute(ns, (novo_endereco, id_banco))
+                    conexao.commit()
+                    print("_________________________________________________________________________")
+                    print("                    Endereço atualizado com sucesso!                     ")
+                    print("_________________________________________________________________________")
+                except Exception as e:
+                    print("Algo deu errado:", e)
+
+        elif escolha == 6:
+            print("Tem certeza que deseja deletar sua Conta da Personal Finance?")
+            yy = input("sim ou não: ").strip().lower()
+
+            if yy == "sim":
+                try:
+                    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+                    conexao.commit()
+
+                    cursor.execute("DELETE FROM transacao WHERE id_banco = %s", (id_banco,))
+                    conexao.commit()
+
+                    cursor.execute("DELETE FROM banco WHERE id = %s", (id_banco,))
+                    conexao.commit()
+
+                    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+                    conexao.commit()
+
+                    print("\n")
+                    print("_________________________________________________________________________")
+                    print("                       Conta deletada com sucesso!                       ")
+                    print("_________________________________________________________________________")
+                    print("            Obrigado pro ter feito parte da Personal Finance!            ")
+                    print("_________________________________________________________________________")
+                    print("\n")
+                    exit()
+
+                except Exception as e:
+                    print("Erro ao deletar conta:", e)
+
+            elif yy == "não":
+                print("Operação cancelada.")
+            else:
+                print("Resposta inválida. Digite apenas 'sim' ou 'não'.")
+
         elif(escolha==7):
             print("\n")
             print("____________________________________________________________________________")
