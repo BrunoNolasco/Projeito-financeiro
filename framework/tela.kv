@@ -1,0 +1,95 @@
+ScreenManager:
+    SignupScreen:
+
+<SignupScreen@Screen>:
+    name: "signup"
+    ScrollView:
+        BoxLayout:
+            orientation: "vertical"
+            padding: 20
+            spacing: 15
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "Cadastro"
+                font_size: 28
+                size_hint_y: None
+                height: 50
+
+            TextInput:
+                id: nome
+                hint_text: "Nome"
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_nome(self.text)
+
+            TextInput:
+                id: sobrenome
+                hint_text: "Sobrenome"
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_sobrenome(self.text)
+
+            TextInput:
+                id: senha
+                hint_text: "Senha"
+                password: True
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_senha(self.text)
+
+            TextInput:
+                id: nascimento
+                hint_text: "Data de nascimento (DD/MM/AAAA)"
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_nascimento(self.text)
+
+            TextInput:
+                id: telefone
+                hint_text: "Telefone"
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_telefone(self.text)
+
+            TextInput:
+                id: contribuinte
+                hint_text: "Contribuinte"
+                multiline: False
+                size_hint_y: None
+                height: 40
+                on_focus: if not self.focus: app.validar_contribuinte(self.text)
+
+            TextInput:
+                id: endereco
+                hint_text: "Endereço"
+                multiline: False
+                size_hint_y: None
+                height: 40
+
+            TextInput:
+                id: deposito
+                hint_text: "Depósito inicial"
+                multiline: False
+                size_hint_y: None
+                height: 40
+
+            Button:
+                text: "Cadastrar"
+                size_hint_y: None
+                height: 50
+                on_release: app.criar_conta(deposito.text, endereco.text)
+
+            Label:
+                id: mensagem
+                text: ""
+                color: 1,0,0,1
+                size_hint_y: None
+                height: 30
+
