@@ -1,8 +1,39 @@
 ScreenManager:
+    MenuScreen:
+        name: "menu"
     SignupScreen:
+        name: "signup"
+    LoginScreen:
+        name: "login"
+
+
+<MenuScreen@Screen>:
+    name: "menu"
+    BoxLayout:
+        orientation: "vertical"
+        spacing: 20
+        padding: 50
+
+        Label:
+            text: "Bem-vindo"
+            font_size: 32
+
+        Button:
+            text: "Cadastrar"
+            size_hint_y: None
+            height: 50
+            on_release:
+                root.manager.current = "signup"
+
+        Button:
+            text: "Login"
+            size_hint_y: None
+            height: 50
+            on_release:
+                root.manager.current = "login"
+
 
 <SignupScreen@Screen>:
-    name: "signup"
     ScrollView:
         BoxLayout:
             orientation: "vertical"
@@ -93,3 +124,46 @@ ScreenManager:
                 size_hint_y: None
                 height: 30
 
+
+<LoginScreen@Screen>:
+    ScrollView:
+        BoxLayout:
+            orientation: "vertical"
+            padding: 20
+            spacing: 15
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "Login"
+                font_size: 28
+                size_hint_y: None
+                height: 50
+
+            TextInput:
+                id: nome_login
+                hint_text: "Nome"
+                multiline: False
+                size_hint_y: None
+                height: 40
+
+            TextInput:
+                id: senha_login
+                hint_text: "Senha"
+                password: True
+                multiline: False
+                size_hint_y: None
+                height: 40
+
+            Button:
+                text: "Entrar"
+                size_hint_y: None
+                height: 50
+                on_release: app.login(nome_login.text, senha_login.text)
+
+            Label:
+                id: mensagem_login
+                text: ""
+                color: 1,0,0,1
+                size_hint_y: None
+                height: 30

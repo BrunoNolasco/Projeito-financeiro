@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.lang import Builder
 from sign_up_backend import SignupBackend
+from login_backend import login as backend_login
 
 class MeuApp(App):
     def __init__(self, **kwargs):
@@ -107,7 +108,18 @@ class MeuApp(App):
         label.text = msg
         label.color = (0, 1, 0, 1) if sucesso else (1, 0, 0, 1)  
             
-    
+    def login(self, nome, senha):
+        tela = self.root.get_screen("login")
+        sucesso = backend_login(nome.strip(), senha.strip())
+        label = tela.ids.mensagem_login
+        if sucesso:
+            label.text = "Login realizado com sucesso!"
+            label.color = (0, 1, 0, 1)
+        else:
+            label.text = "Usuário ou senha incorretos."
+            label.color = (1, 0, 0, 1)
+
+
 
 if __name__ == "__main__":
     MeuApp().run()
