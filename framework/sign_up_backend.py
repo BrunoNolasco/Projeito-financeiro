@@ -20,7 +20,8 @@ class SignupBackend:
             return False, "Caracteres especiais não são aceitos"
         if len(nome) < 2:
             return False, "Nome muito curto"
-        return True, ""
+        self.nome = nome
+        return True, f"Nome válido: {nome}"
 
     def validar_sobrenome(self, sobrenome):
         if any(c in sobrenome for c in ['.', '#', '$', '*', '&', '=', ',', '@', '?', '/']):
@@ -56,25 +57,45 @@ class SignupBackend:
             return False, "Contribuinte inválido."
         self.contribuinte = contribuinte
         return True, f"Contribuinte válido: {contribuinte}"
-
-    # --- Criar conta ---
-    def criar_conta(self, deposito, endereco):
-        if not all([self.nome, self.sobrenome, self.senha, self.nascimento,
-                    self.telefone, self.contribuinte]):
-            return False, "Preencha todos os campos corretamente."
-
+    
+    def validar_deposito(self, deposito):
+        if not deposito.isdigit():
+            return False, "Depósito inválido."
         self.deposito = deposito
+        return True, f"Depósito válido: {deposito}"
+    
+    def validar_endereco(self, endereco):
+        if len(endereco) < 5:
+            return False, "Endereço muito curto."
         self.endereco = endereco
+        return True, f"Endereço válido: {endereco}"
+
+    def criar_conta(self):
+        if not all([self.nome, self.sobrenome, self.senha, self.nascimento,
+                    self.telefone, self.contribuinte, self.deposito, self.endereco]):
+            return False, "Preencha todos os campos corretamente."
 
         try:
             conexao = get_connection()
             cursor = conexao.cursor()
+
+            if isinstance(self.nascimento, str):
+                try:
+                    nascimento_date = datetime.strptime(self.nascimento, "%d/%m/%Y").date()
+                except ValueError:
+                    return False, "Data de nascimento inválida. Use DD/MM/AAAA."
+            else:
+                nascimento_date = self.nascimento
+
+            nascimento_formatado = nascimento_date.strftime("%Y-%m-%d")
+
             query = """
                 INSERT INTO banco (nome, sobrenome, senha_hash, saldo, nascimento, endereco, telefone, contribuinte)
                 VALUES (%s, %s, SHA2(%s, 256), %s, %s, %s, %s, %s)
             """
             valores = (self.nome, self.sobrenome, self.senha, self.deposito,
-                       self.nascimento, self.endereco, self.telefone, self.contribuinte)
+                       nascimento_formatado, self.endereco, self.telefone, self.contribuinte)
+
             cursor.execute(query, valores)
             conexao.commit()
             return True, "Conta criada com sucesso!"
