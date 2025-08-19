@@ -15,18 +15,18 @@ ScreenManager:
         padding: 50
 
         Label:
-            text: "Bem-vindo"
+            text: "Bem-vindo a Personal Finance"
             font_size: 32
 
         Button:
-            text: "Cadastrar"
+            text: "Sign up"
             size_hint_y: None
             height: 50
             on_release:
                 root.manager.current = "signup"
 
         Button:
-            text: "Login"
+            text: "Log in"
             size_hint_y: None
             height: 50
             on_release:
@@ -124,6 +124,12 @@ ScreenManager:
                 size_hint_y: None
                 height: 30
 
+            Button:
+                text: "Voltar ao Menu"
+                size_hint_y: None
+                height: 50
+                on_release: app.root.current = "menu"
+
 
 <LoginScreen@Screen>:
     ScrollView:
@@ -167,3 +173,9 @@ ScreenManager:
                 color: 1,0,0,1
                 size_hint_y: None
                 height: 30
+
+            Button:
+                text: "Voltar ao Menu"
+                size_hint_y: None
+                height: 50
+                on_release: app.root.current = "menu"
