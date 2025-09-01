@@ -1,111 +1,264 @@
-import datetime as date
-from db import get_connection
-from login_backend import login
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from mysql.connector import Error
+from framework.db import get_connection
 
-def opera():
-    conexao = get_connection()
-    cursor = conexao.cursor()
+# Convenções assumidas de esquema:
+# - Tabela `usuarios` (id INT PK, nome, email, ...).
+# - Tabela `banco` (id INT PK, usuario_id INT FK, saldo DECIMAL(12,2)).
+# - Tabela `transacoes` (id INT PK, usuario_id INT FK, tipo ENUM('deposito','retirada'),
+#                       valor DECIMAL(12,2), descricao VARCHAR, data DATETIME).
+#
+# Se os nomes diferirem no seu BD, ajuste os SQLs abaixo.
 
-    credenciais = login()
-    if credenciais is None:
-        return
-    else:
-        usuario_logado, senha_logada = credenciais
-        cursor.execute("SELECT id FROM banco WHERE nome = %s", (usuario_logado,))
-        id_banco = cursor.fetchone()[0]
+def _normalize_decimal(valor: Any) -> float:
+    if isinstance(valor, str):
+        valor = valor.replace(",", ".").strip()
+    return float(valor)
 
-    while True:
-        print("\n1 - Retirar dinheiro")
-        print("2 - Depositar dinheiro")
-        print("3 - Últimas 5 transações")
-        print("4 - Ver perfil")
-        print("5 - Atualizar conta")
-        print("6 - Deletar conta")
-        print("7 - Log Out")
+# --------------- SALDO ----------------
+def get_saldo(usuario_id: int) -> float:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT saldo FROM banco WHERE usuario_id=%s", (usuario_id,))
+            row = cur.fetchone()
+            return float(row[0]) if row and row[0] is not None else 0.0
+    finally:
+        conn.close()
 
-        escolha = input("Escolha: ")
+def _set_saldo(usuario_id: int, novo_saldo: float) -> None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO banco (usuario_id, saldo)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE saldo=VALUES(saldo)
+            """, (usuario_id, novo_saldo))
+        conn.commit()
+    finally:
+        conn.close()
 
-        if escolha == "1":
-            retirar(conexao, cursor, usuario_logado, id_banco)
+# --------------- TRANSACOES ----------------
+def add_transacao(usuario_id: int, tipo: str, valor: Any, descricao: str = "") -> Dict[str, Any]:
+    tipo = tipo.lower().strip()
+    if tipo not in ("deposito", "retirada"):
+        return {"ok": False, "erro": "tipo inválido. Use 'deposito' ou 'retirada'."}
 
-        elif escolha == "2":
-            depositar(conexao, cursor, usuario_logado, id_banco)
+    try:
+        v = _normalize_decimal(valor)
+        if v <= 0:
+            return {"ok": False, "erro": "valor deve ser > 0"}
+    except Exception:
+        return {"ok": False, "erro": "valor inválido"}
 
-        elif escolha == "3":
-            ver_transacoes(cursor, id_banco)
+    saldo_atual = get_saldo(usuario_id)
+    novo_saldo = saldo_atual + v if tipo == "deposito" else saldo_atual - v
+    if novo_saldo < 0:
+        return {"ok": False, "erro": "saldo insuficiente"}
 
-        elif escolha == "4":
-            ver_perfil(cursor, usuario_logado)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO transacoes (usuario_id, tipo, valor, descricao, data)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (usuario_id, tipo, v, descricao, datetime.now()))
+        conn.commit()
+        _set_saldo(usuario_id, novo_saldo)
+        return {"ok": True, "saldo": novo_saldo}
+    except Error as e:
+        return {"ok": False, "erro": str(e)}
+    finally:
+        conn.close()
 
-        elif escolha == "5":
-            atualizar(conexao, cursor, id_banco)
+def listar_transacoes(usuario_id: int, limite: int = 5) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, tipo, valor, descricao, data
+                FROM transacoes
+                WHERE usuario_id=%s
+                ORDER BY data DESC, id DESC
+                LIMIT %s
+            """, (usuario_id, limite))
+            rows = cur.fetchall() or []
+            return [
+                {
+                    "id": r["id"],
+                    "tipo": r["tipo"],
+                    "valor": float(r["valor"]),
+                    "descricao": r.get("descricao") or "",
+                    "data": r["data"].strftime("%Y-%m-%d %H:%M:%S") if isinstance(r["data"], datetime) else str(r["data"]),
+                }
+                for r in rows
+            ]
+    finally:
+        conn.close()
 
-        elif escolha == "6":
-            deletar(conexao, cursor, id_banco)
+def editar_transacao(usuario_id: int, transacao_id: int, novo_tipo: Optional[str] = None,
+                     novo_valor: Optional[Any] = None, nova_descricao: Optional[str] = None) -> Dict[str, Any]:
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, tipo, valor
+                FROM transacoes
+                WHERE id=%s AND usuario_id=%s
+            """, (transacao_id, usuario_id))
+            row = cur.fetchone()
+            if not row:
+                return {"ok": False, "erro": "transação não encontrada"}
 
-        elif escolha == "7":
-            print("Log out feito. Até logo!")
-            break
+            tipo_atual = row["tipo"]
+            valor_atual = float(row["valor"])
 
-        else:
-            print("Opção inválida.")
+            
+            tipo_final = tipo_atual
+            if novo_tipo:
+                novo_tipo = novo_tipo.lower().strip()
+                if novo_tipo not in ("deposito", "retirada"):
+                    return {"ok": False, "erro": "tipo inválido"}
+                tipo_final = novo_tipo
 
-    cursor.close()
-    conexao.close()
+            valor_final = valor_atual
+            if novo_valor is not None:
+                try:
+                    valor_final = _normalize_decimal(novo_valor)
+                    if valor_final <= 0:
+                        return {"ok": False, "erro": "valor deve ser > 0"}
+                except Exception:
+                    return {"ok": False, "erro": "valor inválido"}
 
-# --- Funções auxiliares ---
-def retirar(conexao, cursor, usuario_logado, id_banco):
-    valor = int(input("Quanto deseja retirar? "))
-    cursor.execute("SELECT saldo FROM banco WHERE nome=%s", (usuario_logado,))
-    saldo = cursor.fetchone()[0]
+            
+            saldo = get_saldo(usuario_id)
+            if tipo_atual == "deposito":
+                saldo -= valor_atual
+            else:
+                saldo += valor_atual
 
-    if valor <= saldo:
-        cursor.execute("UPDATE banco SET saldo = saldo - %s WHERE nome=%s", (valor, usuario_logado))
-        conexao.commit()
-        cursor.execute("INSERT INTO transacao (creditado, debitado, id_banco, data) VALUES (%s,%s,%s,%s)",
-                       (0, valor, id_banco, date.datetime.now()))
-        conexao.commit()
-        print(f"Retirada de {valor} realizada.")
-    else:
-        print("Saldo insuficiente.")
+            
+            if tipo_final == "deposito":
+                saldo += valor_final
+            else:
+                saldo -= valor_final
 
-def depositar(conexao, cursor, usuario_logado, id_banco):
-    valor = int(input("Quanto deseja depositar? "))
-    cursor.execute("UPDATE banco SET saldo = saldo + %s WHERE nome=%s", (valor, usuario_logado))
-    conexao.commit()
-    cursor.execute("INSERT INTO transacao (creditado, debitado, id_banco, data) VALUES (%s,%s,%s,%s)",
-                   (valor, 0, id_banco, date.datetime.now()))
-    conexao.commit()
-    print(f"Depósito de {valor} realizado.")
+            if saldo < 0:
+                return {"ok": False, "erro": "saldo insuficiente"}
 
-def ver_transacoes(cursor, id_banco):
-    cursor.execute("SELECT creditado, debitado, data FROM transacao WHERE id_banco=%s ORDER BY data DESC LIMIT 5", (id_banco,))
-    linhas = cursor.fetchall()
-    if linhas:
-        for c, d, dt in linhas:
-            print(f"Cred: {c}, Deb: {d}, Data: {dt}")
-    else:
-        print("Nenhuma transação encontrada.")
+            
+            sets = []
+            params: List[Any] = []
+            if novo_tipo:
+                sets.append("tipo=%s")
+                params.append(tipo_final)
+            if novo_valor is not None:
+                sets.append("valor=%s")
+                params.append(valor_final)
+            if nova_descricao is not None:
+                sets.append("descricao=%s")
+                params.append(nova_descricao)
 
-def ver_perfil(cursor, usuario_logado):
-    cursor.execute("SELECT nome, sobrenome, endereco, telefone, contribuinte, saldo FROM banco WHERE nome=%s", (usuario_logado,))
-    conta = cursor.fetchone()
-    if conta:
-        print("Perfil:", conta)
-    else:
-        print("Usuário não encontrado.")
+            if not sets:
+                return {"ok": True, "saldo": saldo}
 
-def atualizar(conexao, cursor, id_banco):
-    novo_nome = input("Digite novo nome: ")
-    cursor.execute("UPDATE banco SET nome=%s WHERE id=%s", (novo_nome, id_banco))
-    conexao.commit()
-    print("Nome atualizado!")
+            params.extend([transacao_id, usuario_id])
 
-def deletar(conexao, cursor, id_banco):
-    confirm = input("Tem certeza que deseja deletar a conta? (sim/não): ").lower()
-    if confirm == "sim":
-        cursor.execute("DELETE FROM transacao WHERE id_banco=%s", (id_banco,))
-        conexao.commit()
-        cursor.execute("DELETE FROM banco WHERE id=%s", (id_banco,))
-        conexao.commit()
-        print("Conta deletada.")
+            with conn.cursor() as cur2:
+                cur2.execute(f"""
+                    UPDATE transacoes
+                    SET {", ".join(sets)}
+                    WHERE id=%s AND usuario_id=%s
+                """, tuple(params))
+            conn.commit()
+            _set_saldo(usuario_id, saldo)
+            return {"ok": True, "saldo": saldo}
+    finally:
+        conn.close()
+
+def excluir_transacao(usuario_id: int, transacao_id: int) -> Dict[str, Any]:
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, tipo, valor
+                FROM transacoes
+                WHERE id=%s AND usuario_id=%s
+            """, (transacao_id, usuario_id))
+            row = cur.fetchone()
+            if not row:
+                return {"ok": False, "erro": "transação não encontrada"}
+
+            tipo = row["tipo"]
+            valor = float(row["valor"])
+
+            
+            saldo = get_saldo(usuario_id)
+            if tipo == "deposito":
+                saldo -= valor
+            else:
+                saldo += valor
+            if saldo < 0:
+                saldo = 0.0
+
+            with conn.cursor() as cur2:
+                cur2.execute("DELETE FROM transacoes WHERE id=%s AND usuario_id=%s", (transacao_id, usuario_id))
+            conn.commit()
+            _set_saldo(usuario_id, saldo)
+            return {"ok": True, "saldo": saldo}
+    finally:
+        conn.close()
+
+# --------------- PERFIL/CONTA ----------------
+def get_perfil(usuario_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("SELECT id, nome, email FROM usuarios WHERE id=%s", (usuario_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
+
+def atualizar_perfil(usuario_id: int, nome: Optional[str] = None, email: Optional[str] = None) -> Dict[str, Any]:
+    sets = []
+    params: List[Any] = []
+    if nome is not None:
+        sets.append("nome=%s")
+        params.append(nome)
+    if email is not None:
+        sets.append("email=%s")
+        params.append(email)
+    if not sets:
+        return {"ok": True}
+
+    conn = get_connection()
+    try:
+        params.extend([usuario_id])
+        with conn.cursor() as cur:
+            cur.execute(f"UPDATE usuarios SET {', '.join(sets)} WHERE id=%s", tuple(params))
+        conn.commit()
+        return {"ok": True}
+    except Error as e:
+        return {"ok": False, "erro": str(e)}
+    finally:
+        conn.close()
+
+def excluir_conta(usuario_id: int) -> Dict[str, Any]:
+    
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM transacoes WHERE usuario_id=%s", (usuario_id,))
+            cur.execute("DELETE FROM banco WHERE usuario_id=%s", (usuario_id,))
+            cur.execute("DELETE FROM usuarios WHERE id=%s", (usuario_id,))
+        conn.commit()
+        return {"ok": True}
+    except Error as e:
+        return {"ok": False, "erro": str(e)}
+    finally:
+        conn.close()

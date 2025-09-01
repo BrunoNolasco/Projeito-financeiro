@@ -5,6 +5,8 @@ ScreenManager:
         name: "signup"
     LoginScreen:
         name: "login"
+    OperationsScreen:
+        name: "operations"
 
 
 <MenuScreen@Screen>:
@@ -179,3 +181,150 @@ ScreenManager:
                 size_hint_y: None
                 height: 50
                 on_release: app.root.current = "menu"
+
+<OperationsScreen@Screen>:
+    ScrollView:
+        BoxLayout:
+            orientation: "vertical"
+            padding: dp(12)
+            spacing: dp(12)
+
+            Label:
+                text: "Personal Finance"
+                font_size: "20sp"
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+                Label:
+                    text: "Saldo:"
+                    size_hint_x: None
+                    width: dp(60)
+                Label:
+                    id: balance_value
+                    text: "R$ 0,00"
+
+    # Adicionar Transação
+        BoxLayout:
+            size_hint_y: None
+            height: dp(40)
+            spacing: dp(8)
+            Spinner:
+                id: add_tipo
+                text: "deposito"
+                values: ["deposito","retirada"]
+                size_hint_x: None
+                width: dp(120)
+                TextInput:
+                    id: add_valor
+                    hint_text: "Valor"
+                    input_filter: "float"
+                TextInput:
+                    id: add_desc
+                    hint_text: "Descrição"
+                Button:
+                    text: "Adicionar"
+                    on_release:
+                        app.ui_add_transacao(add_tipo.text, add_valor.text, add_desc.text)
+                        add_valor.text = ""
+                        add_desc.text = ""
+
+            # Feedback de operações
+            Label:
+                id: ops_feedback
+                text: ""
+                color: 1,0,0,1
+                size_hint_y: None
+                height: dp(24)
+
+            # Histórico
+            Label:
+                text: "Últimas transações"
+                size_hint_y: None
+                height: dp(24)
+
+            RecycleView:
+                id: history_rv
+                viewclass: "HistoryItem"
+                RecycleBoxLayout:
+                    default_size: None, dp(56)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
+
+            # Editar / Excluir
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+                TextInput:
+                    id: edit_id
+                    hint_text: "ID transação"
+                    input_filter: "int"
+                    size_hint_x: None
+                    width: dp(120)
+                Spinner:
+                    id: edit_tipo
+                    text: "deposito"
+                    values: ["deposito","retirada"]
+                    size_hint_x: None
+                    width: dp(120)
+                TextInput:
+                    id: edit_valor
+                    hint_text: "Novo valor"
+                    input_filter: "float"
+                TextInput:
+                    id: edit_desc
+                    hint_text: "Nova descrição"
+                Button:
+                    text: "Editar"
+                    on_release:
+                        app.ui_editar_transacao(edit_id.text, edit_tipo.text, edit_valor.text if edit_valor.text else None, edit_desc.text if edit_desc.text else None)
+                        edit_valor.text = ""
+                        edit_desc.text = ""
+                Button:
+                    text: "Excluir"
+                    on_release:
+                        app.ui_excluir_transacao(edit_id.text)
+                        edit_id.text = ""
+
+            # Perfil
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+                TextInput:
+                    id: perfil_nome
+                    hint_text: "Nome"
+                TextInput:
+                    id: perfil_email
+                    hint_text: "Email"
+                Button:
+                    text: "Carregar Perfil"
+                    on_release: app.ui_carregar_perfil()
+                Button:
+                    text: "Atualizar Perfil"
+                    on_release: app.ui_atualizar_perfil(perfil_nome.text, perfil_email.text)
+
+            Label:
+                id: perfil_feedback
+                text: ""
+                size_hint_y: None
+                height: dp(20)
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+                Button:
+                    text: "Atualizar Saldo/Histórico"
+                    on_release:
+                        app.ui_get_saldo()
+                        app.ui_listar_transacoes()
+                Button:
+                    text: "Sair"
+                    on_release:
+                        app.current_user_id = 0
+                        app.root.current = "login"
