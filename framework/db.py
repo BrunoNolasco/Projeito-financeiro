@@ -1,9 +1,12 @@
-import mysql.connector as mysql
+import mysql.connector
+
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "Brunopy",
+    "password": "",
+    "database": "controle_financeiro",
+    "autocommit": False,
+}
 
 def get_connection():
-    return mysql.connect(
-        host="localhost",
-        user="Brunopy",
-        password="",
-        database="controle_financeiro"
-    )
+    return mysql.connector.connect(**DB_CONFIG)

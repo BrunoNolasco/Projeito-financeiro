@@ -182,12 +182,15 @@ ScreenManager:
                 height: 50
                 on_release: app.root.current = "menu"
 
+
 <OperationsScreen@Screen>:
     ScrollView:
         BoxLayout:
             orientation: "vertical"
             padding: dp(12)
             spacing: dp(12)
+            size_hint_y: None
+            height: self.minimum_height
 
             Label:
                 text: "Personal Finance"
@@ -205,17 +208,17 @@ ScreenManager:
                     id: balance_value
                     text: "R$ 0,00"
 
-    # Adicionar Transação
-        BoxLayout:
-            size_hint_y: None
-            height: dp(40)
-            spacing: dp(8)
-            Spinner:
-                id: add_tipo
-                text: "deposito"
-                values: ["deposito","retirada"]
-                size_hint_x: None
-                width: dp(120)
+            # Adicionar Transação
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+                Spinner:
+                    id: add_tipo
+                    text: "deposito"
+                    values: ["deposito","retirada"]
+                    size_hint_x: None
+                    width: dp(120)
                 TextInput:
                     id: add_valor
                     hint_text: "Valor"
@@ -328,3 +331,23 @@ ScreenManager:
                     on_release:
                         app.current_user_id = 0
                         app.root.current = "login"
+
+<HistoryItem@BoxLayout>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(40)
+
+    Label:
+        id: tipo
+        text: root.tipo if hasattr(root, "tipo") else ""
+        size_hint_x: 0.3
+
+    Label:
+        id: valor
+        text: root.valor if hasattr(root, "valor") else ""
+        size_hint_x: 0.3
+
+    Label:
+        id: descricao
+        text: root.descricao if hasattr(root, "descricao") else ""
+        size_hint_x: 0.4
