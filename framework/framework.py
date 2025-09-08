@@ -557,44 +557,54 @@ class MeuApp(App):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT nome, sobrenome, endereco, telefone, contribuinte FROM users WHERE id = %s",
+            "SELECT nome, sobrenome, endereco, telefone, contribuinte FROM banco WHERE id = %s",
             (self.current_user_id,)
         )
         perfil = cursor.fetchone()
         cursor.close()
         conn.close()
 
-        tela = self.root.get_screen("operations")
         if perfil:
-            ids = tela.ids
-            ids['perfil_nome'].text = perfil.get("nome", "") or ""
-            ids['perfil_sobrenome'].text = perfil.get("sobrenome", "") or ""
-            ids['perfil_endereco'].text = perfil.get("endereco", "") or ""
-            ids['perfil_telefone'].text = perfil.get("telefone", "") or ""
-            ids['perfil_contribuinte'].text = perfil.get("contribuinte", "") or ""
-            ids['perfil_feedback'].text = "Perfil carregado com sucesso!"
-        else:
-            tela.ids.perfil_feedback.text = "Usuário não encontrado."
-
+            tela = self.root.get_screen("operations")
+            tela.ids.perfil_nome.text = perfil["nome"]
+            tela.ids.perfil_sobrenome.text = perfil["sobrenome"]
+            tela.ids.perfil_endereco.text = perfil["endereco"]
+            tela.ids.perfil_telefone.text = perfil["telefone"]
+            tela.ids.perfil_contribuinte.text = perfil["contribuinte"]
 
     def ui_atualizar_perfil(self, nome, sobrenome, endereco, telefone, contribuinte):
         if not self.current_user_id:
             return
 
-        from db import get_connection
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE users
-            SET nome = %s, sobrenome = %s, endereco = %s, telefone = %s, contribuinte = %s
-            WHERE id = %s
-        """, (nome, sobrenome, endereco, telefone, contribuinte, self.current_user_id))
-        conn.commit()
-        cursor.close()
-        conn.close()
+        try:
+            from db import get_connection
+            conn = get_connection()
+            cursor = conn.cursor()
 
-        tela = self.root.get_screen("operations")
-        tela.ids.perfil_feedback.text = "Perfil atualizado com sucesso!"
+            cursor.execute("""
+                UPDATE banco
+                SET nome = %s, sobrenome = %s, endereco = %s, telefone = %s, contribuinte = %s
+                WHERE id = %s
+            """, (nome, sobrenome, endereco, telefone, contribuinte, self.current_user_id))
+
+            conn.commit()
+            linhas_afetadas = cursor.rowcount
+            cursor.close()
+            conn.close()
+
+            tela = self.root.get_screen("operations")
+            if linhas_afetadas > 0:
+                tela.ids.perfil_feedback.text = "Perfil atualizado com sucesso!"
+                tela.ids.perfil_feedback.color = (0, 1, 0, 1)
+            else:
+                tela.ids.perfil_feedback.text = "Nenhuma alteração realizada."
+                tela.ids.perfil_feedback.color = (1, 0.5, 0, 1)
+
+        except Exception as e:
+            tela = self.root.get_screen("operations")
+            tela.ids.perfil_feedback.text = f"Erro ao atualizar: {e}"
+            tela.ids.perfil_feedback.color = (1, 0, 0, 1)
+
 
 
 
